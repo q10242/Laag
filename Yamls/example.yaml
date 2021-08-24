@@ -1,0 +1,82 @@
+# setting by models 
+Laan_Modules:
+  TestModelName:
+    data_cache: true # 如果為 true 則會將所有資料預先載入redis等資料庫 type為 index或者show時 由快取資料庫優先給予 更新刪除時會使用queue來更新資料庫
+    table: TestModelName # 如果不填則由TestModelName 為主
+    soft_delete: true # 將會多一欄 deleted_at 的時間欄位 並且設定soft delete 為 true
+    timestamps: true # 預設為true 如果為false 將會無視 updated_time和 created_time
+    updated_time: updated_time # 預設名稱為 updated_time
+    created_time: created_time # 預設名稱為 created_time
+    columns: #欄位名稱 若無則只產生空表
+      id: # 欄位名稱
+        description: "主要的id" #敘述 會產生在文件中 以及DB comment中
+        type: bigInteger # 這裡以laravel 的欄位型別為主
+        primary: true 
+        autoincrement: true
+      test_second_name_id: 
+        description: "連接第二個表的id"
+        type: bigInteger
+        hidden: true    # 不會被select出來
+        fillable: true
+        nullable: false
+        relations:
+          TestSecondName:  # 另外一個model的名稱 必須要存在本yaml中
+            foreign_key: id 
+            type: hasOne # 以laravel 的relation為主
+
+      testStringColumn:
+        type: string(255) # 255可不填
+        nullable: true # 可空
+    apis: # 如果不填寫就只產生 model 所有response 的 預設為json格式 如果需要客製化則需要另外修改
+      index: # 將會成為function name 和 url的名稱  必填
+        type: index # 可以開放設定 create read index delete update
+        pagination: true # 加上分頁、limit 僅限 index type使用
+        asc:  # 排序依據 優先度由上而下 也可以使用 desc  asc和desc裡的值不可以重複
+          - test_second_name_id
+          - testStringColumn
+      
+        method: get # http method 以laravel為主 預設為any
+        role: # 可以使用這個api 的角色 需要配合 laravel_permission 預設為無須權限
+          - admin
+          - testRole
+        permissions: # 可以使用這個api 的權限 需要配合 laravel_permission 事先登錄過 預設為無須權限
+          - "can get TestCol2"
+        url: api/TestModelName/test_custom_index #如果不填的話 就會以api/TestModelName/index 為主
+        conditions: # 搜尋時的條件 預設為全部欄位
+          - test_second_name_id
+          - testStringColumn 
+        wantted_columns: #選出來的條件 預設為全部欄位
+          - id
+          - test_second_name_id
+          - testStringColumn 
+        translations: 
+          test_second_name_id: # 會將本地的這個欄位 轉換成 另外一個model中的另外一個欄位 必須要有relation
+            TestSecondName: testStringColumn2
+
+        auto_valid: true  # 以columns的內容為主 包括require等 預設為true , false 為都不驗證
+        valid: # 需要客製化的驗證資訊 以laravel 為主 
+          test_secoPhonenumbersnd_name_id: "required|max:999"
+      doc: # 有設定就會自動產生api文件
+        type: json
+        path: /home/work/docs/doc.json
+  TestSecondName:
+    table: TestSecondName # 如果不填則由TestModelName 為主
+    soft_delete: false # 將會多一欄 deleted_at 的時間欄位 並且設定soft delete 為 true
+    timestamps: false
+    columns: #欄位名稱 若無則只產生空表
+      id: # 欄位名稱
+        description: "主要的id" #敘述 會產生在文件中 以及DB comment中
+        type: bigInteger # 這裡以laravel 的欄位型別為主
+        primary: true 
+        autoincrement: true
+
+      testSecondCol2: 
+        description: "第二個表的測試文件"
+        type: string
+        relations:
+          TestModelName:  # 另外一個model的名稱 必須要存在本yaml中
+            foreign_key: test_second_name_id 
+            type: belongsTo # 以laravel 的relation為主
+      testStringColumn2:
+        type: string(255) # 255可不填
+        nullable: true # 可空
